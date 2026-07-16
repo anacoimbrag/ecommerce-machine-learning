@@ -1,0 +1,66 @@
+services:
+  # Camada de ML (ver README.md pra ordem completa de execução do pipeline
+  # batch). Cada serviço abaixo é um passo one-shot, igual ao `dbt` do
+  # agentic-cdp -- não roda como processo de longa duração. Conecta no
+  # ClickHouse do agentic-cdp pela rede externa "cdp-shared-net" (subida lá,
+  # ver ../agentic-cdp/docker-compose.yml) -- não sobe ClickHouse próprio.
+  ml-segmentation:
+    build: .
+    environment:
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=8123
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-}
+    networks:
+      - cdp-shared-net
+
+  ml-campaigns:
+    build: .
+    command: ["python", "training/campaigns/train_propensity.py"]
+    environment:
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=8123
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-}
+    networks:
+      - cdp-shared-net
+
+  ml-recommendations:
+    build: .
+    command: ["python", "training/recommendations/train_item_similarity.py"]
+    environment:
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=8123
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-}
+    networks:
+      - cdp-shared-net
+
+  ml-export:
+    build: .
+    command: ["python", "export_to_serving_store.py"]
+    environment:
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=8123
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-}
+      - SERVING_STORE_PATH=/output/serving_store.sqlite
+    networks:
+      - cdp-shared-net
+    volumes:
+      - ./output:/output
+
+  ml-api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - SERVING_STORE_PATH=/output/serving_store.sqlite
+    volumes:
+      - ./output:/output:ro
+
+networks:
+  cdp-shared-net:
+    external: true

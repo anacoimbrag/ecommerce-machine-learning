@@ -1,0 +1,9 @@
+output/*.sqlite
+*.log
+.env
+__pycache__/
+*.egg-info/
+.venv-py/
+.claude/
+.stack-*.log
+node_modules/
