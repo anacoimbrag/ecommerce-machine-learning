@@ -1,0 +1,17 @@
+ecomm_ml:
+  target: dev
+  outputs:
+    dev:
+      type: clickhouse
+      host: "{{ env_var('CLICKHOUSE_HOST', 'clickhouse') }}"
+      port: "{{ env_var('CLICKHOUSE_PORT', '8123') | as_number }}"
+      user: "{{ env_var('CLICKHOUSE_USER', 'default') }}"
+      password: "{{ env_var('CLICKHOUSE_PASSWORD', '') }}"
+      schema: main
+      secure: false
+      # Mesmo motivo do profiles.yml do agentic-cdp: LEFT JOIN sem match no
+      # ClickHouse por padrão preenche colunas String com '' (não NULL),
+      # quebrando os coalesce(x, default) usados em customer_profile,
+      # feat_customer_segment_labels etc.
+      custom_settings:
+        join_use_nulls: 1

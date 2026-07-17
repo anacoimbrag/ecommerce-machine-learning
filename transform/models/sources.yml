@@ -1,0 +1,41 @@
+version: 2
+
+# ecomm-ml não roda staging/marts próprios -- lê os schemas já materializados
+# pelo dbt do agentic-cdp (../agentic-cdp/transform) no ClickHouse
+# compartilhado, via source() em vez de ref() (só funciona entre projetos
+# dbt diferentes porque staging lá é materializado como `view`, não
+# `ephemeral` -- ver ../agentic-cdp/transform/dbt_project.yml).
+sources:
+  - name: staging
+    schema: staging
+    description: >
+      Modelos staging do agentic-cdp (../agentic-cdp/transform/models/staging/).
+    tables:
+      - name: stg_cdp_customer_profiles
+      - name: stg_customer_orders
+      - name: stg_customer_order_items
+      - name: stg_customer_refunds
+      - name: stg_ga4_customer_behavior
+
+  - name: marts
+    schema: marts
+    description: >
+      Modelos marts do agentic-cdp (../agentic-cdp/transform/models/marts/).
+    tables:
+      - name: fct_order_line
+      - name: dim_promotions
+
+  - name: raw
+    schema: raw
+    description: >
+      Landing zone compartilhada no ClickHouse. ga4_promotion_engagement é
+      gravada por ../agentic-cdp/scripts/load_ga4_customer_behavior.py
+      (exposição a campanha por cliente, GA4); customer_clusters,
+      campaign_propensity e product_similarity são gravadas pelos scripts de
+      treino deste projeto (training/*/train_*.py -- saída crua dos modelos
+      de ML, consumida pelos models de activation/).
+    tables:
+      - name: ga4_promotion_engagement
+      - name: customer_clusters
+      - name: campaign_propensity
+      - name: product_similarity

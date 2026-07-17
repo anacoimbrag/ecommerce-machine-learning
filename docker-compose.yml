@@ -4,6 +4,18 @@ services:
   # agentic-cdp -- não roda como processo de longa duração. Conecta no
   # ClickHouse do agentic-cdp pela rede externa "cdp-shared-net" (subida lá,
   # ver ../agentic-cdp/docker-compose.yml) -- não sobe ClickHouse próprio.
+  dbt:
+    build: ./transform
+    environment:
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=8123
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-}
+    networks:
+      - cdp-shared-net
+    volumes:
+      - ./transform:/app
+
   ml-segmentation:
     build: .
     environment:

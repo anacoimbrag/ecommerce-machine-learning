@@ -1,0 +1,60 @@
+version: 2
+
+models:
+  - name: feat_rfm_features
+    description: >
+      Uma linha por cliente com recency/frequency/monetary recalculados
+      direto das staging sources (não a partir de activation.customer_profile,
+      para não criar dependência circular com o output do K-Means). Consumida
+      por training/segmentation/train_kmeans.py.
+    columns:
+      - name: customer_id
+        tests: [not_null, unique]
+
+  - name: feat_promotion_engagement
+    description: >
+      Exposição a campanha por cliente (view/select de promoção no GA4),
+      junto de raw.ga4_promotion_engagement ao customer_id via
+      stg_cdp_customer_profiles. Consumida por feat_campaign_training_data.
+    columns:
+      - name: customer_id
+        tests: [not_null]
+      - name: promotion_slug
+        tests: [not_null]
+
+  - name: feat_campaign_training_data
+    description: >
+      Uma linha por (customer_id, promotion_id) com exposição registrada,
+      features de RFM/favoritos e o rótulo `converted` (uso real do cupom em
+      fct_order_line). Consumida por training/campaigns/train_propensity.py.
+    columns:
+      - name: customer_id
+        tests: [not_null]
+      - name: promotion_id
+        tests: [not_null]
+
+  - name: feat_customer_segment_labels
+    description: >
+      Traduz raw.customer_clusters (saída crua do K-Means) em rótulos de
+      negócio (segment_label/tier), classificando cada cluster por tercil de
+      recência/frequência/valor (centroids RFM) e aplicando uma grade de
+      decisão (ex: recência baixa + frequência alta + valor alto =
+      Champions). Consumida por activation/customer_profile.sql e por
+      activation/segment_campaign_affinity.sql — fica em feature/ (não em
+      activation/) justamente para que esses dois não dependam um do outro.
+      Só existe depois que training/segmentation/train_kmeans.py já rodou (não faz
+      parte da 1a passagem de `dbt build --select` do pipeline batch).
+    columns:
+      - name: customer_id
+        tests: [not_null, unique]
+
+  - name: feat_customer_product_interactions
+    description: >
+      Matriz implícita cliente x produto (peso = quantidade comprada), grão
+      1 linha por (customer_id, product_id) com pelo menos uma compra.
+      Consumida por training/recommendations/train_item_similarity.py.
+    columns:
+      - name: customer_id
+        tests: [not_null]
+      - name: product_id
+        tests: [not_null]

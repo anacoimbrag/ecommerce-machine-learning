@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
-# Orquestra o stack nativo (sem Docker) do ecomm-ml: treino de ML, export pro
-# serving store, ml-api e o painel web. A venv (.venv-py) e o node_modules
-# (web/) são criados automaticamente na primeira execução -- projeto roda
-# sozinho, só precisa de Python 3.11+ e Node.js instalados na máquina.
+# Orquestra o stack nativo (sem Docker) do ecomm-ml: treino de ML, o dbt
+# build próprio (transform/, feature+activation) e o export pro serving
+# store, além de ml-api e do painel web. As venvs (.venv-py, .venv-dbt) e o
+# node_modules (web/) são criados automaticamente na primeira execução --
+# projeto roda sozinho, só precisa de Python 3.11 (mesma versão que o
+# agentic-cdp usa -- dbt-clickhouse quebra em Python 3.14) e Node.js
+# instalados na máquina.
 #
 # O agentic-cdp roda separado (../agentic-cdp/stack.sh up/data) -- não é
 # gerenciado daqui, só precisa estar no ar (ClickHouse + staging/marts já
-# construídos) antes de `./stack.sh ml`. Este script NÃO chama o `dbt build`
-# de `../agentic-cdp/transform` -- entre `ml` (treino) e `export`, rode esse
-# outro fluxo manualmente (ver mensagem de erro do `./stack.sh ml`); não há
-# nenhum arquivo pra copiar entre os dois projetos, dbt e treino conversam só
-# via tabelas do ClickHouse compartilhado.
+# construídos, staging como `view`) antes de `./stack.sh ml`. transform/ aqui
+# é um projeto dbt próprio (feature/activation) que lê staging/marts de lá
+# via source() -- não copia nenhum arquivo entre os dois projetos, só lê o
+# schema físico no ClickHouse compartilhado.
 #
 # Uso:
-#   ./stack.sh ml         # treino de ML (segmentação, campanhas, recomendações)
-#   ./stack.sh export     # publica activation/* (dbt) no serving store -- rode depois do dbt build
+#   ./stack.sh ml         # dbt build (feature) -> treino -> dbt build (completo) -> export
+#   ./stack.sh export     # só publica activation/* no serving store (sem retreinar)
 #   ./stack.sh ml-api     # sobe a ml-api em background (:8000)
 #   ./stack.sh ml-web     # sobe o painel web da ml-api em background (:5173)
 #   ./stack.sh down       # para ml-api e ml-web
@@ -50,27 +52,51 @@ require_clickhouse() {
 ensure_venv() {
   if [ ! -d ".venv-py" ]; then
     log "venv: .venv-py não existe, criando e instalando requirements.txt..."
-    python3 -m venv .venv-py
+    python3.11 -m venv .venv-py
     .venv-py/bin/pip install -q --upgrade pip
     .venv-py/bin/pip install -q -r requirements.txt
   fi
 }
 
+ensure_dbt_venv() {
+  if [ ! -d ".venv-dbt" ]; then
+    log "venv: .venv-dbt não existe, criando e instalando transform/requirements.txt..."
+    python3.11 -m venv .venv-dbt
+    .venv-dbt/bin/pip install -q --upgrade pip
+    .venv-dbt/bin/pip install -q -r transform/requirements.txt
+  fi
+}
+
+dbt_build() {
+  ensure_dbt_venv
+  source .venv-dbt/bin/activate
+  (cd transform && dbt build "$@")
+  deactivate
+}
+
 cmd_ml() {
   require_clickhouse
-  ensure_venv
+
+  log "dbt build (feature/*, exceto feat_customer_segment_labels -- depende de raw.customer_clusters, que só existe depois do treino)"
+  dbt_build --exclude path:models/activation feat_customer_segment_labels
 
   log "ml: treino (segmentação, campanhas, recomendações)"
+  ensure_venv
   source .venv-py/bin/activate
   python training/segmentation/train_kmeans.py
   python training/campaigns/train_propensity.py
   python training/recommendations/train_item_similarity.py
   deactivate
 
-  log "treino completo. Falta rodar o dbt build no agentic-cdp antes do export:"
-  log "  (cd $AGENTIC_CDP/transform && source ../.venv-dbt/bin/activate && dbt build)"
-  log "Depois rode: ./stack.sh export"
-  exit 1
+  log "dbt build completo (feat_customer_segment_labels + activation/*)"
+  dbt_build
+
+  log "ml: export para serving store"
+  source .venv-py/bin/activate
+  python export_to_serving_store.py
+  deactivate
+
+  log "pipeline de ML completo."
 }
 
 cmd_export() {

@@ -7,3 +7,8 @@ __pycache__/
 .claude/
 .stack-*.log
 node_modules/
+.venv-dbt/
+transform/target/
+transform/dbt_packages/
+transform/logs/
+transform/.user.yml

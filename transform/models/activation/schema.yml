@@ -1,0 +1,84 @@
+version: 2
+
+models:
+  - name: customer_profile
+    description: >
+      Perfil completo de cliente (identidade + PII + as mesmas métricas de
+      RFM e comportamento de `dim_customers`), simulando o profile store de
+      uma CDP real. Fonte para segmentações complexas, análises
+      individuais, vitrines e campanhas personalizadas. Materializado no
+      schema `activation`, separado de `marts`, por concentrar PII e não
+      fazer parte do star schema. Não é referenciada pelos fatos —
+      `dim_customers` é a FK do star schema.
+    columns:
+      - name: customer_id
+        tests: [not_null, unique]
+      - name: cluster_id
+        description: >
+          Cluster cru do K-Means (training/segmentation/train_kmeans.py), nulo
+          para clientes sem histórico de compra.
+      - name: segment_label
+        description: >
+          Rótulo de negócio do cluster (Champions/Loyal/Promising/At
+          Risk/Hibernating/Lost), ou 'no_purchase' para quem nunca comprou.
+          Calculado em feature/feat_customer_segment_labels.sql.
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Champions', 'Loyal', 'Promising', 'At Risk',
+                         'Hibernating', 'Lost', 'no_purchase']
+      - name: tier
+        description: Gold/Silver/Bronze por percentil de net_revenue entre quem já comprou.
+      - name: next_best_promotion_id
+        description: >
+          Campanha recomendada para o cliente (caso de uso 2), escolhida em
+          4 camadas de prioridade — ver next_best_campaign_reason.
+      - name: next_best_campaign_reason
+        description: >
+          Camada que decidiu a campanha: propensity_model (modelo de
+          propensão do cliente) | segment_affinity (conversão histórica do
+          segmento) | overall_affinity (conversão histórica geral) |
+          most_recent_fallback (nenhuma conversão histórica ainda).
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['propensity_model', 'segment_affinity',
+                         'overall_affinity', 'most_recent_fallback']
+
+  - name: segment_campaign_affinity
+    description: >
+      Conversão histórica real (uso de cupom) por (segment_label,
+      promotion_id) — substitui uma tabela de regras escrita à mão pelo
+      fallback do caso de uso 2. Ver transform/models/activation/segment_campaign_affinity.sql.
+    columns:
+      - name: segment_label
+        tests: [not_null]
+      - name: promotion_id
+        tests: [not_null]
+
+  - name: product_affinity
+    description: >
+      Market basket em SQL puro ("quem comprou X também comprou Y"),
+      agregado por product_id, com support/confidence/lift. Um dos 3 sinais
+      de customer_showcase.
+    columns:
+      - name: product_id_a
+        tests: [not_null]
+      - name: product_id_b
+        tests: [not_null]
+
+  - name: customer_showcase
+    description: >
+      Vitrine inteligente personalizada (caso de uso 3): top-12 produtos por
+      cliente, combinando similaridade de produto, cesta de compra e
+      fallback por categoria/marca favorita.
+    columns:
+      - name: customer_id
+        tests: [not_null]
+      - name: rank
+        tests: [not_null]
+      - name: reason
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['item_similarity', 'basket_affinity', 'favorite_category_fallback']

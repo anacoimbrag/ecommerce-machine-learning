@@ -1,0 +1,19 @@
+name: ecomm_ml
+version: "1.0.0"
+config-version: 2
+profile: ecomm_ml
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  ecomm_ml:
+    feature:
+      +materialized: table
+      +schema: feature
+      +engine: MergeTree
+    activation:
+      +materialized: table
+      +schema: activation
+      +engine: MergeTree
