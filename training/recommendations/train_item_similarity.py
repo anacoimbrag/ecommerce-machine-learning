@@ -6,14 +6,55 @@ import os
 import sys
 from datetime import datetime, timezone
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_similarity
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from common.db import connect, fetch_dicts, replace_table  # noqa: E402
+from common.plotting import save_figure  # noqa: E402
 
 TOP_K = int(os.environ.get("SIMILARITY_TOP_K", "10"))
+HEATMAP_MAX_PRODUCTS = int(os.environ.get("SIMILARITY_HEATMAP_MAX_PRODUCTS", "40"))
+
+
+def plot_similarity_distribution(rows: list[tuple], trained_at: datetime) -> None:
+    scores = [row[2] for row in rows]
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.hist(scores, bins=30, color="steelblue", edgecolor="white")
+    ax.set_xlabel("Similarity score")
+    ax.set_ylabel("Frequência")
+    ax.set_title(f"Distribuição de similaridade produto-produto (top-{TOP_K})")
+    save_figure(fig, "train_item_similarity", "similarity_distribution", trained_at)
+
+
+def plot_similarity_heatmap(
+    similarity: np.ndarray, product_ids: list[str], trained_at: datetime
+) -> None:
+    """Heatmap da matriz de similaridade. Recorta pros produtos mais conectados
+    quando o catálogo é grande demais pra caber legível num único gráfico."""
+    n = len(product_ids)
+    if n > HEATMAP_MAX_PRODUCTS:
+        strength = similarity.sum(axis=1)
+        top_idx = np.argsort(-strength)[:HEATMAP_MAX_PRODUCTS]
+        matrix = similarity[np.ix_(top_idx, top_idx)]
+        labels = [product_ids[i] for i in top_idx]
+        subtitle = f"top {HEATMAP_MAX_PRODUCTS} de {n} produtos, por força de similaridade"
+    else:
+        matrix = similarity
+        labels = product_ids
+        subtitle = f"{n} produtos"
+
+    fig, ax = plt.subplots(figsize=(10, 9))
+    im = ax.imshow(matrix, cmap="Blues", vmin=0, vmax=1)
+    ax.set_xticks(range(len(labels)))
+    ax.set_yticks(range(len(labels)))
+    ax.set_xticklabels(labels, rotation=90, fontsize=6)
+    ax.set_yticklabels(labels, fontsize=6)
+    ax.set_title(f"Matriz de similaridade produto x produto\n({subtitle})", fontsize=11)
+    fig.colorbar(im, ax=ax, label="Similarity score", fraction=0.046, pad=0.04)
+    save_figure(fig, "train_item_similarity", "similarity_heatmap", trained_at)
 
 
 def build_product_similarity_matrix(interactions: list[dict]) -> tuple[np.ndarray, list[str]]:
@@ -35,8 +76,9 @@ def build_product_similarity_matrix(interactions: list[dict]) -> tuple[np.ndarra
     return similarity, product_ids
 
 
-def top_similar_products(similarity: np.ndarray, product_ids: list[str]) -> list[tuple]:
-    trained_at = datetime.now(timezone.utc)
+def top_similar_products(
+    similarity: np.ndarray, product_ids: list[str], trained_at: datetime
+) -> list[tuple]:
     rows = []
     for i, product_id in enumerate(product_ids):
         neighbor_indices = np.argsort(-similarity[i])[:TOP_K]
@@ -58,7 +100,10 @@ def main() -> int:
         return 1
 
     similarity, product_ids = build_product_similarity_matrix(interactions)
-    rows = top_similar_products(similarity, product_ids)
+    trained_at = datetime.now(timezone.utc)
+    rows = top_similar_products(similarity, product_ids, trained_at)
+    plot_similarity_distribution(rows, trained_at)
+    plot_similarity_heatmap(similarity, product_ids, trained_at)
 
     replace_table(
         con, "raw.product_similarity",

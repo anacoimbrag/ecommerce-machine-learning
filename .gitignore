@@ -1,4 +1,4 @@
-output/*.sqlite
+output/
 *.log
 .env
 __pycache__/

@@ -3,5 +3,6 @@ pytz
 scikit-learn
 numpy
 scipy
+matplotlib
 fastapi
 uvicorn[standard]
