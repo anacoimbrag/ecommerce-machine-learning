@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Orquestra o stack nativo (sem Docker) do ecomm-ml: treino de ML, export pro
-# serving store, ml-api e o painel web. Ver README.md para o setup inicial da
-# venv (.venv-py) e do node_modules (web/).
+# serving store, ml-api e o painel web. A venv (.venv-py) e o node_modules
+# (web/) são criados automaticamente na primeira execução -- projeto roda
+# sozinho, só precisa de Python 3.11+ e Node.js instalados na máquina.
 #
 # O agentic-cdp roda separado (../agentic-cdp/stack.sh up/data) -- não é
 # gerenciado daqui, só precisa estar no ar (ClickHouse + staging/marts já
@@ -46,8 +47,18 @@ require_clickhouse() {
   fi
 }
 
+ensure_venv() {
+  if [ ! -d ".venv-py" ]; then
+    log "venv: .venv-py não existe, criando e instalando requirements.txt..."
+    python3 -m venv .venv-py
+    .venv-py/bin/pip install -q --upgrade pip
+    .venv-py/bin/pip install -q -r requirements.txt
+  fi
+}
+
 cmd_ml() {
   require_clickhouse
+  ensure_venv
 
   log "ml: treino (segmentação, campanhas, recomendações)"
   source .venv-py/bin/activate
@@ -64,6 +75,7 @@ cmd_ml() {
 
 cmd_export() {
   require_clickhouse
+  ensure_venv
 
   log "ml: export para serving store"
   source .venv-py/bin/activate
@@ -76,6 +88,7 @@ cmd_ml_api() {
     log "ml-api: já rodando"
     return
   fi
+  ensure_venv
   log "ml-api: iniciando..."
   source .venv-py/bin/activate
   nohup uvicorn api.main:app --host 0.0.0.0 --port 8000 \
