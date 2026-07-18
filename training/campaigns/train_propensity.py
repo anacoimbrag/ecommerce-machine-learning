@@ -25,11 +25,14 @@ FEATURE_COLUMNS = [
 
 
 def plot_propensity_distribution(scores_by_label: dict[int, list[float]], trained_at: datetime) -> None:
+    # density=True porque as classes são muito desbalanceadas (poucas
+    # conversões) -- em contagem bruta a barra "converteu" fica pequena
+    # demais pra comparar a FORMA das duas distribuições.
     fig, ax = plt.subplots(figsize=(8, 5))
-    ax.hist(scores_by_label[0], bins=30, alpha=0.6, label="Não converteu", color="lightcoral")
-    ax.hist(scores_by_label[1], bins=30, alpha=0.6, label="Converteu", color="seagreen")
+    ax.hist(scores_by_label[0], bins=30, alpha=0.6, density=True, label="Não converteu", color="lightcoral")
+    ax.hist(scores_by_label[1], bins=30, alpha=0.6, density=True, label="Converteu", color="seagreen")
     ax.set_xlabel("Propensity score")
-    ax.set_ylabel("Frequência")
+    ax.set_ylabel("Densidade")
     ax.set_title("Regressão logística: propensity score por conversão real")
     ax.legend()
     save_figure(fig, "train_propensity", "propensity_distribution", trained_at)
