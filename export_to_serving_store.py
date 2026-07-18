@@ -27,6 +27,13 @@ CUSTOMER_SHOWCASE_COLUMNS = [
     "customer_id", "rank", "product_id", "sku_id", "reason", "score", "computed_at",
 ]
 PRODUCT_COLUMNS = ["sku_id", "sku_name", "selling_price", "image_url"]
+REVENUE_TREND_COLUMNS = [
+    "day", "actual_revenue", "predicted_revenue", "trend_label", "is_forecast", "trained_at",
+]
+ORDER_VOLUME_TREND_COLUMNS = [
+    "day", "actual_order_count", "predicted_order_count", "trend_label", "is_forecast",
+    "trained_at",
+]
 
 
 def export_table(
@@ -65,12 +72,23 @@ def main() -> int:
         ch_client, sqlite_con, "marts.dim_products",
         PRODUCT_COLUMNS, "products", index_column="sku_id",
     )
+    n_revenue_trend = export_table(
+        ch_client, sqlite_con, "activation.revenue_trend",
+        REVENUE_TREND_COLUMNS, "revenue_trend", index_column="day",
+    )
+    n_order_volume_trend = export_table(
+        ch_client, sqlite_con, "activation.order_volume_trend",
+        ORDER_VOLUME_TREND_COLUMNS, "order_volume_trend", index_column="day",
+    )
 
     sqlite_con.commit()
     sqlite_con.close()
 
     print(f"Done. {SQLITE_PATH}: customer_profile={n_profiles} linhas, "
-          f"customer_showcase={n_showcase} linhas, products={n_products} linhas.", flush=True)
+          f"customer_showcase={n_showcase} linhas, products={n_products} linhas, "
+          f"revenue_trend={n_revenue_trend} linhas, "
+          f"order_volume_trend={n_order_volume_trend} linhas.",
+          flush=True)
     return 0
 
 

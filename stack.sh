@@ -80,12 +80,14 @@ cmd_ml() {
   log "dbt build (feature/*, exceto feat_customer_segment_labels -- depende de raw.customer_clusters, que só existe depois do treino)"
   dbt_build --exclude path:models/activation feat_customer_segment_labels
 
-  log "ml: treino (segmentação, campanhas, recomendações)"
+  log "ml: treino (segmentação, campanhas, recomendações, receita)"
   ensure_venv
   source .venv-py/bin/activate
   python training/segmentation/train_kmeans.py
   python training/campaigns/train_propensity.py
   python training/recommendations/train_item_similarity.py
+  python training/revenue/train_revenue_trend.py
+  python training/orders/train_order_volume_trend.py
   deactivate
 
   log "dbt build completo (feat_customer_segment_labels + activation/*)"

@@ -82,3 +82,38 @@ models:
           - accepted_values:
               arguments:
                 values: ['item_similarity', 'basket_affinity', 'favorite_category_fallback']
+
+  - name: revenue_trend
+    description: >
+      Tendência de receita da marca (não por cliente): publica
+      raw.revenue_trend_forecast (Gradient Boosting autoregressivo sobre
+      receita líquida diária, training/revenue/train_revenue_trend.py) —
+      histórico (backtest 1 dia à frente, actual_revenue preenchido) +
+      previsão recursiva de ~90 dias futuros (actual_revenue nulo,
+      is_forecast=true), com o rótulo alta/estável/queda por dia.
+    columns:
+      - name: day
+        tests: [not_null, unique]
+      - name: trend_label
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['alta', 'estável', 'queda']
+
+  - name: order_volume_trend
+    description: >
+      Tendência de volume de pedidos da marca (não por cliente): publica
+      raw.order_volume_trend_forecast (Gradient Boosting autoregressivo
+      sobre o número de pedidos diário,
+      training/orders/train_order_volume_trend.py) — histórico (backtest 1
+      dia à frente, actual_order_count preenchido) + previsão recursiva de
+      ~90 dias futuros (actual_order_count nulo, is_forecast=true), com o
+      rótulo alta/estável/queda por dia.
+    columns:
+      - name: day
+        tests: [not_null, unique]
+      - name: trend_label
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['alta', 'estável', 'queda']

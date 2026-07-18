@@ -58,3 +58,13 @@ models:
         tests: [not_null]
       - name: product_id
         tests: [not_null]
+
+  - name: feat_revenue_daily
+    description: >
+      Receita líquida e volume de pedidos agregados por dia (receita bruta -
+      reembolsos do dia), grão 1 linha por dia com pelo menos um pedido.
+      Consumida por training/revenue/train_revenue_trend.py (net_revenue) e
+      training/orders/train_order_volume_trend.py (order_count).
+    columns:
+      - name: day
+        tests: [not_null, unique]

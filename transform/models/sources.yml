@@ -31,11 +31,16 @@ sources:
       Landing zone compartilhada no ClickHouse. ga4_promotion_engagement é
       gravada por ../agentic-cdp/scripts/load_ga4_customer_behavior.py
       (exposição a campanha por cliente, GA4); customer_clusters,
-      campaign_propensity e product_similarity são gravadas pelos scripts de
-      treino deste projeto (training/*/train_*.py -- saída crua dos modelos
-      de ML, consumida pelos models de activation/).
+      campaign_propensity, product_similarity, revenue_trend_forecast e
+      order_volume_trend_forecast são gravadas pelos scripts de treino
+      deste projeto (training/*/train_*.py -- saída crua dos modelos de
+      ML). revenue_trend_forecast e order_volume_trend_forecast já são
+      publicadas em activation/revenue_trend.sql e
+      activation/order_volume_trend.sql.
     tables:
       - name: ga4_promotion_engagement
       - name: customer_clusters
       - name: campaign_propensity
       - name: product_similarity
+      - name: revenue_trend_forecast
+      - name: order_volume_trend_forecast
