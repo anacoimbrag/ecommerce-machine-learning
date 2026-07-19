@@ -113,7 +113,7 @@ cmd_export() {
 
 cmd_ml_api() {
   if curl -sf -m 2 "http://localhost:8000/health" >/dev/null 2>&1; then
-    log "ml-api: já rodando"
+    log "ml-api: rodando em :8000"
     return
   fi
   ensure_venv
@@ -127,7 +127,7 @@ cmd_ml_api() {
 
 cmd_ml_web() {
   if curl -sf -m 2 "http://localhost:5173" >/dev/null 2>&1; then
-    log "ml-web: já rodando"
+    log "ml-web: rodando em :5173"
     return
   fi
   if [ ! -d "web/node_modules" ]; then
