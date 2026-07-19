@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Orquestra o stack nativo (sem Docker) do ecomm-ml: treino de ML, o dbt
+# Orquestra o stack nativo (sem Docker) do ecommerce-machine-learning: treino de ML, o dbt
 # build próprio (transform/, feature+activation) e o export pro serving
 # store, além de ml-api e do painel web. As venvs (.venv-py, .venv-dbt) e o
 # node_modules (web/) são criados automaticamente na primeira execução --
@@ -29,7 +29,7 @@ set -a
 source .env
 set +a
 
-log() { echo "[ecomm-ml] $*"; }
+log() { echo "[ecommerce-machine-learning] $*"; }
 
 wait_for() {
   local desc="$1" check="$2" tries=30

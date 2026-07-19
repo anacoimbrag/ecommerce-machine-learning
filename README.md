@@ -1,4 +1,4 @@
-# ecomm-ml
+# ecommerce-machine-learning
 
 Camada de ML do CDP: resolve 3 casos de uso -- clusterização dinâmica de
 clientes, próxima campanha sugerida e vitrine inteligente personalizada.
