@@ -12,3 +12,4 @@ transform/target/
 transform/dbt_packages/
 transform/logs/
 transform/.user.yml
+.DS_Store
