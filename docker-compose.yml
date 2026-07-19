@@ -1,9 +1,9 @@
 services:
   # Camada de ML (ver README.md pra ordem completa de execução do pipeline
   # batch). Cada serviço abaixo é um passo one-shot, igual ao `dbt` do
-  # agentic-cdp -- não roda como processo de longa duração. Conecta no
-  # ClickHouse do agentic-cdp pela rede externa "cdp-shared-net" (subida lá,
-  # ver ../agentic-cdp/docker-compose.yml) -- não sobe ClickHouse próprio.
+  # ecommerce-data-pipeline -- não roda como processo de longa duração. Conecta no
+  # ClickHouse do ecommerce-data-pipeline pela rede externa "cdp-shared-net" (subida lá,
+  # ver ../ecommerce-data-pipeline/docker-compose.yml) -- não sobe ClickHouse próprio.
   dbt:
     build: ./transform
     environment:

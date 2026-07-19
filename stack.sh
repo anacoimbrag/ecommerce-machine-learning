@@ -4,10 +4,10 @@
 # store, além de ml-api e do painel web. As venvs (.venv-py, .venv-dbt) e o
 # node_modules (web/) são criados automaticamente na primeira execução --
 # projeto roda sozinho, só precisa de Python 3.11 (mesma versão que o
-# agentic-cdp usa -- dbt-clickhouse quebra em Python 3.14) e Node.js
+# ecommerce-data-pipeline usa -- dbt-clickhouse quebra em Python 3.14) e Node.js
 # instalados na máquina.
 #
-# O agentic-cdp roda separado (../agentic-cdp/stack.sh up/data) -- não é
+# O ecommerce-data-pipeline roda separado (../ecommerce-data-pipeline/stack.sh up/data) -- não é
 # gerenciado daqui, só precisa estar no ar (ClickHouse + staging/marts já
 # construídos, staging como `view`) antes de `./stack.sh ml`. transform/ aqui
 # é um projeto dbt próprio (feature/activation) que lê staging/marts de lá
@@ -23,7 +23,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 ROOT="$(pwd)"
-AGENTIC_CDP="$ROOT/../agentic-cdp"
+AGENTIC_CDP="$ROOT/../ecommerce-data-pipeline"
 
 set -a
 source .env

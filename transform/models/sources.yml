@@ -1,15 +1,15 @@
 version: 2
 
 # ecomm-ml não roda staging/marts próprios -- lê os schemas já materializados
-# pelo dbt do agentic-cdp (../agentic-cdp/transform) no ClickHouse
+# pelo dbt do ecommerce-data-pipeline (../ecommerce-data-pipeline/transform) no ClickHouse
 # compartilhado, via source() em vez de ref() (só funciona entre projetos
 # dbt diferentes porque staging lá é materializado como `view`, não
-# `ephemeral` -- ver ../agentic-cdp/transform/dbt_project.yml).
+# `ephemeral` -- ver ../ecommerce-data-pipeline/transform/dbt_project.yml).
 sources:
   - name: staging
     schema: staging
     description: >
-      Modelos staging do agentic-cdp (../agentic-cdp/transform/models/staging/).
+      Modelos staging do ecommerce-data-pipeline (../ecommerce-data-pipeline/transform/models/staging/).
     tables:
       - name: stg_cdp_customer_profiles
       - name: stg_customer_orders
@@ -20,7 +20,7 @@ sources:
   - name: marts
     schema: marts
     description: >
-      Modelos marts do agentic-cdp (../agentic-cdp/transform/models/marts/).
+      Modelos marts do ecommerce-data-pipeline (../ecommerce-data-pipeline/transform/models/marts/).
     tables:
       - name: fct_order_line
       - name: dim_promotions
@@ -29,7 +29,7 @@ sources:
     schema: raw
     description: >
       Landing zone compartilhada no ClickHouse. ga4_promotion_engagement é
-      gravada por ../agentic-cdp/scripts/load_ga4_customer_behavior.py
+      gravada por ../ecommerce-data-pipeline/scripts/load_ga4_customer_behavior.py
       (exposição a campanha por cliente, GA4); customer_clusters,
       campaign_propensity, product_similarity, revenue_trend_forecast e
       order_volume_trend_forecast são gravadas pelos scripts de treino

@@ -9,7 +9,7 @@ ecomm_ml:
       password: "{{ env_var('CLICKHOUSE_PASSWORD', '') }}"
       schema: main
       secure: false
-      # Mesmo motivo do profiles.yml do agentic-cdp: LEFT JOIN sem match no
+      # Mesmo motivo do profiles.yml do ecommerce-data-pipeline: LEFT JOIN sem match no
       # ClickHouse por padrão preenche colunas String com '' (não NULL),
       # quebrando os coalesce(x, default) usados em customer_profile,
       # feat_customer_segment_labels etc.

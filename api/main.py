@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.routers import campaigns, customers, segments, showcase
 
 app = FastAPI(
-    title="agentic-cdp ML API",
+    title="ecommerce-data-pipeline ML API",
     description="Segmentação dinâmica, próxima campanha sugerida e vitrine personalizada.",
 )
 
