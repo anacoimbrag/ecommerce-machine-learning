@@ -6,9 +6,19 @@ from api.schemas import ShowcaseItem, ShowcaseResponse
 router = APIRouter()
 
 
-@router.get("/customers/{customer_id}/showcase", response_model=ShowcaseResponse)
+@router.get(
+    "/customers/{customer_id}/showcase",
+    response_model=ShowcaseResponse,
+    summary="Vitrine personalizada",
+    description=(
+        "Top produtos recomendados para o cliente (caso de uso 3), combinando similaridade de "
+        "produto, cesta de compra e fallback por categoria/marca favorita. Cliente inexistente "
+        "ou sem vitrine retorna `items` vazio (não 404)."
+    ),
+)
 def get_customer_showcase(
-    customer_id: str, limit: int = Query(default=12, ge=1, le=12)
+    customer_id: str,
+    limit: int = Query(default=12, ge=1, le=12, description="Quantidade máxima de produtos (1–12)."),
 ) -> ShowcaseResponse:
     with get_connection() as con:
         rows = con.execute(

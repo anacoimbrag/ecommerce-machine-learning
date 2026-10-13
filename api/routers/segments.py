@@ -1,12 +1,18 @@
 from fastapi import APIRouter, HTTPException
 
 from api.db import get_connection
-from api.schemas import SegmentResponse, SegmentSummary
+from api.schemas import ErrorResponse, SegmentResponse, SegmentSummary
 
 router = APIRouter()
 
 
-@router.get("/customers/{customer_id}/segment", response_model=SegmentResponse)
+@router.get(
+    "/customers/{customer_id}/segment",
+    response_model=SegmentResponse,
+    summary="Segmento do cliente",
+    description="Cluster K-Means, rótulo de negócio (RFM) e tier de receita do cliente (caso de uso 1).",
+    responses={404: {"model": ErrorResponse, "description": "Cliente não encontrado"}},
+)
 def get_customer_segment(customer_id: str) -> SegmentResponse:
     with get_connection() as con:
         row = con.execute(
@@ -24,7 +30,12 @@ def get_customer_segment(customer_id: str) -> SegmentResponse:
     return SegmentResponse(**dict(row))
 
 
-@router.get("/segments", response_model=list[SegmentSummary])
+@router.get(
+    "/segments",
+    response_model=list[SegmentSummary],
+    summary="Distribuição de clientes por segmento",
+    description="Contagem de clientes em cada `segment_label`, do maior para o menor.",
+)
 def list_segments() -> list[SegmentSummary]:
     with get_connection() as con:
         rows = con.execute(

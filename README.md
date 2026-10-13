@@ -76,6 +76,11 @@ de treino já escreveram em `raw.*`. `./stack.sh ml` encadeia tudo isso:
 ./stack.sh ml-web   # sobe o painel web (:5173)
 ```
 
+Com a ml-api no ar, a documentação interativa (Swagger UI) fica em
+http://localhost:8000/docs (ReDoc em `/redoc`, spec OpenAPI em
+`/openapi.json`). Resumos, descrições e valores possíveis de cada campo vêm
+dos metadados em `api/main.py`, `api/routers/*` e `api/schemas.py`.
+
 Por baixo dos panos, `./stack.sh ml` roda, na ordem:
 
 ```bash

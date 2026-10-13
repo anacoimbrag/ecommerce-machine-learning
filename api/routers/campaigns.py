@@ -1,12 +1,22 @@
 from fastapi import APIRouter, HTTPException
 
 from api.db import get_connection
-from api.schemas import CampaignResponse
+from api.schemas import CampaignResponse, ErrorResponse
 
 router = APIRouter()
 
 
-@router.get("/customers/{customer_id}/next-best-campaign", response_model=CampaignResponse)
+@router.get(
+    "/customers/{customer_id}/next-best-campaign",
+    response_model=CampaignResponse,
+    summary="Próxima campanha sugerida",
+    description=(
+        "Campanha recomendada para o cliente (caso de uso 2), escolhida em 4 camadas de "
+        "prioridade: modelo de propensão → afinidade do segmento → afinidade geral → "
+        "campanha mais recente. `reason` indica qual camada decidiu."
+    ),
+    responses={404: {"model": ErrorResponse, "description": "Cliente não encontrado"}},
+)
 def get_next_best_campaign(customer_id: str) -> CampaignResponse:
     with get_connection() as con:
         row = con.execute(
